@@ -11,16 +11,17 @@ import cPickle as pickle
 # import plotly.plotly as py
 
 from model import buildmodel, predict
-from frauddb import *
+from frauddbv2 import *
 
 app = Flask(__name__)
 PORT = 5353
 REGISTER_URL = "http://10.3.33.9:5000/register"
 DATA = []
 TIMESTAMP = []
+SCORES = []
 
 # Database-related variables.
-dbname = 'frauddb'
+dbname = 'frauddbv2'
 tablename = 'events'
 user = 'gSchool'
 conn_fraud = None
@@ -61,14 +62,15 @@ def score():
     #TIMESTAMP.append(time.time())
 
     data_new = json.dumps(request.json)
-    timestamp_new = time.time()
+    timestamp_new = datetime.datetime.now()
 
     # Predict with our model.
-    score = predict(json.loads(data_new), our_model, final_columns,
+    data_json = json.loads(data_new)
+    score = predict(data_json, our_model, final_columns,
                          category_features, averages)
-
+    #SCORES.append(score)
     # save the data and prediction in our db.
-    #store_1_row(cur_fraud, data_new, score, timestamp_new)
+    store_1_row(cur_fraud, data_json, score, timestamp_new)
 
     return ""
 
