@@ -11,6 +11,7 @@ import cPickle as pickle
 import plotly.plotly as py
 from plotly.graph_objs import *
 from datetime import datetime
+import sys
 
 import numpy as np
 #Username: jim.knudstrup
@@ -62,12 +63,12 @@ def gen_colors(probabilities):
     """
     colors = []
     for prob in probabilities:
-        if prob >= .8:
-            colors.append('#c75959')
-        elif prob >= .5:
-            colors.append('#c0ce53')
+        if float(prob) >= .3:
+            colors.append('#c75959')  # light red
+        elif float(prob) >= .1:
+            colors.append('#c0ce53')  # light green
         else:
-            colors.append('#74df49')
+            colors.append('#74df49')  # bright green
     return colors
 
 def build_trace(rn, rise, color_list):
@@ -103,7 +104,13 @@ def index():
     
     labels = [result[3] for result in results] 
     probs = [result[1] for result in results]
+
+    print probs
+    sys.stderr.write('------------\n')
+    sys.stderr.write(','.join([str(prob) for prob in probs]) + '\n')
     colors = gen_colors(probs)
+    print colors
+    sys.stderr.write(','.join([str(color) for color in colors]) + '\n')
 
     data = build_trace(labels, probs, colors)
     layout = build_layout()

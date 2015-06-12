@@ -83,14 +83,15 @@ def store_1_row(cur, data, score, timestamp, conn ):
     t = t.replace('%', '%%')
     t = t.replace("'", '"')
     try:
-        # sql = '''
-        # INSERT INTO %s  (object_id, score, ts_received, data)  VALUES (%s, %.3f, '%s', '%s') 
-        # ''' % (tablename, obj_id, score, timestamp, t)
-
         sql = '''
-        INSERT INTO %s  (object_id, score, ts_received)  VALUES (%s, %.3f, '%s');
-        ''' % (tablename, obj_id, score, timestamp) 
-        print sql
+        INSERT INTO %s  (object_id, score, ts_received, data)  VALUES (%s, %.3f, '%s', '%s') 
+        ''' % (tablename, obj_id, score, timestamp, t)
+
+        # sql = '''
+        # INSERT INTO %s  (object_id, score, ts_received)  VALUES (%s, %.3f, '%s');
+        # ''' % (tablename, obj_id, score, timestamp) 
+
+        print sql[:150]
         cur.execute(sql)
         conn.commit()
     except: 
