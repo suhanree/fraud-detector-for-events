@@ -47,12 +47,12 @@ def get_db(dbname = dbname, user = user):
 
     #conn.close()
     #conn = psycopg2.connect(database="testdb", user="postgres", password="pass123", host="127.0.0.1", port="5432")
-    print "Opened database %s successfully" %(dbname)
+    print "-------------\n Opened database %s successfully" %(dbname)
     return conn_fraud, cur_fraud
 
 
 #def store_1_row(cur, score):
-def store_1_row(cur, data, score, timestamp):
+def store_1_row(cur, data, score, timestamp, conn ):
     '''
     insert one row to table events  
     - INPUT:
@@ -88,10 +88,11 @@ def store_1_row(cur, data, score, timestamp):
         # ''' % (tablename, obj_id, score, timestamp, t)
 
         sql = '''
-        INSERT INTO %s  (object_id, score, ts_received)  VALUES (%s, %.3f, '%s')
+        INSERT INTO %s  (object_id, score, ts_received)  VALUES (%s, %.3f, '%s');
         ''' % (tablename, obj_id, score, timestamp) 
         print sql
         cur.execute(sql)
+        conn.commit()
     except: 
         pass
     # cur.execute("insert into %s  (object_id, score, ts_received, data)  values \
@@ -179,7 +180,7 @@ if __name__ == '__main__':
     #print score, timestamp
     #print data
     print '\n',3, 'insert one data row'
-    store_1_row(cur, data, score, timestamp)
+    store_1_row(cur, data, score, timestamp, conn)
     conn.commit()
 
     print '\n',4, 'get most recent data from the database'

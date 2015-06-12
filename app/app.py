@@ -8,7 +8,14 @@ import time
 import os
 import sys
 import cPickle as pickle
-# import plotly.plotly as py
+import plotly.plotly as py
+from plotly.graph_objs import *
+from datetime import datetime
+
+import numpy as np
+#Username: jim.knudstrup
+#API Key: mn4lcoy1du
+# python -c "import plotly; plotly.tools.set_credentials_file(username='jim.knudstrup', api_key='mn4lcoy1du')"
 
 from model import buildmodel, predict
 from frauddbv2 import *
@@ -44,13 +51,66 @@ non_category_features = ['approx_payout_date', 'body_length', 'num_payouts',
                         'sale_duration', 'sale_duration2',
                         'user_age', 'venue_latitude', 'venue_longitude']
 
+def gen_colors(probabilities):
+    """
+    Input: list of probabilities (floats)
+    Output: list of colors (strings of hex codes)
+    Takes in probabilities and color codes them for graphing.
+    Red: High Risk
+    Yellow: Medium Risk
+    Green: Low Risk
+    """
+    colors = []
+    for prob in probabilities:
+        if prob >= .8:
+            colors.append('#c75959')
+        elif prob >= .5:
+            colors.append('#c0ce53')
+        else:
+            colors.append('#74df49')
+    return colors
+
+def build_trace(rn, rise, color_list):
+    """Makes a bar plot trace and returns it."""
+    data = Data([
+        Bar(
+            x=rn,
+            y=rise,
+            name="Recent Activity",
+            marker=Marker(color=color_list)
+            )
+        ])
+    return data
+
+def build_layout():
+    """Builds and returns a plotly layout."""
+    title = "Fraud Detector: Recent Activity"
+    layout = Layout(
+        title=title,
+        showlegend=False,
+        yaxis=YAxis(
+            title="Probability",
+            zeroline=False))
+    return layout
+
 @app.route('/')
 def index():
     #Testing to see to it that I can output something to the dashboard
     name = "default"
-    if DATA and TIMESTAMP:
-        data = json.loads(DATA[-1])
-        name = data['email_domain']#"email_domain": "watercoolerhub.com",
+
+    # Reading results from db.
+    results = get_most_recent_k(cur_fraud, k=20)
+    
+    labels = [result[3] for result in results] 
+    probs = [result[1] for result in results]
+    colors = gen_colors(probs)
+
+    data = build_trace(labels, probs, colors)
+    layout = build_layout()
+    fig = Figure(data=data, layout=layout)
+
+
+    plot_url = py.plot(fig, filename='Recent-Transactions', auto_open=False)
 
     return render_template('index.html', data=name)
 
@@ -70,7 +130,7 @@ def score():
                          category_features, averages)
     #SCORES.append(score)
     # save the data and prediction in our db.
-    store_1_row(cur_fraud, data_json, score, timestamp_new)
+    store_1_row(cur_fraud, data_json, score, timestamp_new, conn_fraud)
 
     return ""
 
@@ -105,10 +165,7 @@ if __name__ == '__main__':
             (built_model, final_columns, averages) = pickle.load(f)
     our_model = built_model
 
-    # Get the database.
-    dbname = 'frauddb'
-    tablename = 'events'
-    user = 'gSchool'
+    # Conneting to db
     conn_fraud, cur_fraud = get_db(dbname, user)
 
     # Register for pinging service
